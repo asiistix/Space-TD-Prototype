@@ -6,8 +6,10 @@ public class MachineGuntower : TowerBase
 {
     public GameObject bulletPrefab;
     public float BulletSpeed = 10f;
-
     
+
+    public enum Type {  Type1, Type2 ,Type3}
+    public Type Level;
 
     protected override void Update()
     {

@@ -15,11 +15,15 @@ public class TowerBase : MonoBehaviour
     public bool IsSearchingForTarget = false;
     float searchTimer = 0f;
     float maxsearchTimer = 2f;
-    float Delay = 0f;
-    float MaxDelay = 3f;
+
+
     public List<Transform> TargetPoints;
 
     Coroutine AutoRotate;
+
+    public enum TowerType { None, MachineGun , Barracks , LaserTower, RocketTower}
+    public TowerType type;
+
 
     protected virtual void Update()
     {
@@ -29,29 +33,14 @@ public class TowerBase : MonoBehaviour
             {
                 IsSearchingForTarget = true;
                 searchTimer = maxsearchTimer;
-                Delay = 0f;
             }
 
 
             if (IsSearchingForTarget)
             {
-                if (Delay == 0)
+                if (AutoRotate == null)
                 {
-                    if (AutoRotate == null)
-                    {
-                        AutoRotate = StartCoroutine(RotateTurretRandomly());
-                    }
-                    else if (AutoRotate != null)
-                    {
-                        StopCoroutine(AutoRotate);
-                        AutoRotate = StartCoroutine(RotateTurretRandomly());
-                    }
-                }
-
-                Delay += Time.deltaTime;
-                if (Delay >= MaxDelay)
-                {
-                    Delay = 0;
+                    AutoRotate = StartCoroutine(RotateTurretRandomly());
                 }
             }
             if (searchTimer <= 0f)
@@ -89,15 +78,21 @@ public class TowerBase : MonoBehaviour
 
         int randomIndex = Random.Range(0, TargetPoints.Count);
 
-        while (IsSearchingForTarget)
+        Vector3 randomRotation = TargetPoints[randomIndex].position;
+
+        Vector3 direction = (randomRotation - transform.position).normalized;
+
+        Quaternion targetRotation = Quaternion.LookRotation(direction);
+
+        while (IsSearchingForTarget && transform.rotation != targetRotation)
         {
             yield return null;
 
-            Vector3 randomRotation = TargetPoints[randomIndex].position;
+            randomRotation = TargetPoints[randomIndex].position;
 
-            Vector3 direction = (randomRotation - transform.position).normalized;
+            direction = (randomRotation - transform.position).normalized;
 
-            Quaternion targetRotation = Quaternion.LookRotation(direction);
+            targetRotation = Quaternion.LookRotation(direction);
 
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * RotatonSpeed);
             yield return new WaitForSeconds(.5f);
@@ -123,7 +118,7 @@ public class TowerBase : MonoBehaviour
                 nearestEnemy = enemy.transform;
             }
         }
-        if (nearestEnemy!= null && Vector3.Distance(nearestEnemy.position, transform.position) < Range)
+        if (nearestEnemy != null && Vector3.Distance(nearestEnemy.position, transform.position) < Range)
         {
             IsSearchingForTarget = false;
             return nearestEnemy;
